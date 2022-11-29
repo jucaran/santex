@@ -1,0 +1,8 @@
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "exec": "ts-node ./src/index.ts",
+  "env": {
+    "DATABASE_URL": "postgresql://postgres:devpassword@localhost:5432/santex"
+  }
+}

@@ -4,17 +4,28 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "env-cmd -f tests/.env.test mocha -r ts-node/register 'tests/**/*.spec.ts' --exit",
+    "build": "tsc",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" --config ./.prettierrc",
+    "dev": "nodemon ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "@apollo/server": "^4.2.2",
+    "winston": "^3.8.2"
+  },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
     "eslint": "^8.28.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.26.0",
-    "prettier": "^2.8.0"
+    "nodemon": "^2.0.20",
+    "prettier": "^2.8.0",
+    "prisma": "^4.6.1",
+    "ts-node": "^10.9.1"
   }
 }
