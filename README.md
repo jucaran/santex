@@ -1,6 +1,6 @@
-Santex challenge
+# Santex challenge
 
-**To run this project you are going to need Docker installed.**
+<ins> **To run this project you are going to need Docker installed.**</ins>
 
 To run a dev environment you can:
 

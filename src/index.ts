@@ -1,11 +1,12 @@
 import { ApolloServer } from '@apollo/server'
 import { startStandaloneServer } from '@apollo/server/standalone'
 import schemaTypes from './schema/types'
-import schemaQuerys from './schema/query'
-import resolvers from './resolvers'
+import queries from './schema/queries'
+import mutations from './schema/mutations'
+import resolvers from './resolvers/index'
 import logger from './logger'
 
-const typeDefs = [schemaTypes, schemaQuerys].join('')
+const typeDefs = [schemaTypes, queries, mutations].join('')
 
 const server = new ApolloServer({ typeDefs, resolvers })
 
