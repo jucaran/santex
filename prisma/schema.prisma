@@ -15,15 +15,20 @@ model Competition {
   name     String
   code     String @unique
   areaName String
+  teams    Team[]
 }
 
 model Team {
-  id        Int    @id @default(autoincrement())
-  name      String
-  tla       String
-  shortName String
-  areaName  String
-  address   String
+  id         Int         @id @default(autoincrement())
+  league     Competition @relation(fields: [leagueCode], references: [code])
+  leagueCode String      
+  name       String
+  tla        String
+  shortName  String
+  areaName   String
+  address    String
+  players    Player[]
+  coach      Coach?
 }
 
 model Player {
@@ -32,6 +37,8 @@ model Player {
   position    String
   dateOfBirth String
   nationality String
+  team        Team   @relation(fields: [teamId], references: [id])
+  teamId      Int
 }
 
 model Coach {
@@ -39,4 +46,6 @@ model Coach {
   name        String
   dateOfBirth String
   nationality String
+  team        Team   @relation(fields: [teamId], references: [id])
+  teamId      Int    @unique
 }

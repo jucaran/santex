@@ -1,6 +1,8 @@
-import axios from 'axios'
 import logger from '../logger'
 import { GraphQLError } from 'graphql'
+import { getCompetition, saveCompetition } from './modules/competitions'
+import { getTeams, saveTeams } from './modules/teams'
+import { saveAllPlayers } from './modules/squad'
 
 export default {
   Query: {
@@ -13,18 +15,16 @@ export default {
     importLeague: async (_, { leagueCode }) => {
       logger.info(`Importing league: ${leagueCode}`)
       try {
-        await axios.get(`http://api.football-data.org/v4/competitions/${leagueCode}`, {
-          headers: {
-            'X-Auth-Token': process.env.API_TOKEN
-          }
-        })
-        return 'OK'
+        const [teams, competition] = await Promise.all([getTeams(leagueCode), getCompetition(leagueCode)])
+        await Promise.all([saveCompetition(competition), saveTeams(teams), saveAllPlayers(teams)])
+        return 'League imported'
       } catch (e) {
-        logger.error('Error trying to import league', { status: e.status, message: e.message })
-        throw new GraphQLError(e.message, {
+        logger.error('Error trying to import league', { status: e.status, message: e.message, error: e })
+        throw new GraphQLError('Error trying to import league', {
           extensions: {
-            code: e.code,
-          },
+            message: e.message,
+            code: e.code
+          }
         })
       }
     }

@@ -9,7 +9,7 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console({
-      level: 'info'
+      level: process.env.LOGS_LEVEL ?? 'info'
     })
   ]
 })
