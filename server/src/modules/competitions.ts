@@ -2,7 +2,6 @@ import logger from '../logger.js'
 import got from 'got'
 import { ApiCompetitionResponse } from '../types.js'
 import { Competition, PrismaClient } from '@prisma/client'
-import { redis } from '../clients.js'
 import { getTeamsFromAPI, saveTeams } from '../modules/teams.js'
 import { saveAllPlayers } from '../modules/squad.js'
 import { GraphQLError } from 'graphql'
@@ -12,10 +11,10 @@ import { ApolloContext } from '../index.js'
  * Takes a league code and saves the competition its teams and its players on the db
  * @param leagueCode The code of the required league
  */
-export const importLeague = async (leagueCode: string, { ip, prisma }: ApolloContext) => {
+export const importLeague = async (leagueCode: string, { ip, prisma, redis }: ApolloContext) => {
   logger.info(`Importing league: ${leagueCode}`, { ip })
 
-  const lastRead = await redis.get(leagueCode)
+  const lastRead = await redis.get(leagueCode + ip)
   const secondsPassed = getTimePassed(lastRead)
   logger.debug('Got last read from cache layer', { lastRead, secondsPassed })
 
@@ -27,7 +26,7 @@ export const importLeague = async (leagueCode: string, { ip, prisma }: ApolloCon
     await saveTeams(teams, prisma)
     await saveAllPlayers(teams, prisma)
 
-    redis.set(leagueCode, new Date().toString())
+    redis.set(leagueCode + ip, new Date().toString())
 
     return 'League imported'
   } catch (e) {

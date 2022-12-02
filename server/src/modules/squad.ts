@@ -2,6 +2,7 @@ import logger from '../logger.js'
 import { Coach, Player, PrismaClient } from '@prisma/client'
 import { TeamWithSquad } from '../types.js'
 import { GraphQLError } from 'graphql'
+import { ApolloContext } from '../index.js'
 
 /**
  * It takes a league code and returns a list of players/coachs from that league
@@ -10,7 +11,7 @@ import { GraphQLError } from 'graphql'
  */
 export const getLeaguePlayers = async (
   { leagueCode, teamName },
-  prisma: PrismaClient
+  { prisma }: ApolloContext
 ): Promise<Array<Coach | Player>> => {
   logger.info('Getting league players', { leagueCode, teamName })
   try {

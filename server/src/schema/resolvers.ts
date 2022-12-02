@@ -6,8 +6,8 @@ import { getTeam } from '../modules/teams.js'
 export default {
   Query: {
     players: (_, { leagueCode, teamName }, context: ApolloContext) =>
-      getLeaguePlayers({ leagueCode, teamName }, context.prisma),
-    team: (_, { name }, context: ApolloContext) => getTeam(name, context.prisma)
+      getLeaguePlayers({ leagueCode, teamName }, context),
+    team: (_, { name }, context: ApolloContext) => getTeam(name, context)
   },
   Mutation: {
     importLeague: async (_, { leagueCode }, context: ApolloContext) => importLeague(leagueCode, context)

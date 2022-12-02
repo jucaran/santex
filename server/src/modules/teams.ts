@@ -5,13 +5,14 @@ import { Coach, Player, PrismaClient, Team } from '@prisma/client'
 import { ApiCompetitionTeamsResponse } from '../types.js'
 import { TeamWithSquad } from '../types.js'
 import logger from '../logger.js'
+import { ApolloContext } from '../index.js'
 
 /**
  * It takes a league code and returns a list of players/coachs from that league
  * @param leagueCode The code of league to retrieve players/coachs from
  * @param leagueCode An optional team name to filter players/coach by
  */
-export const getTeam = async (name: string, prisma: PrismaClient): Promise<TeamWithSquad> => {
+export const getTeam = async (name: string, { prisma }: ApolloContext): Promise<TeamWithSquad> => {
   logger.info('Getting team', { name })
   try {
     return await prisma.team.findFirst({
