@@ -1,8 +1,8 @@
-import logger from '../../logger'
+import logger from '../logger'
 import got from 'got'
 import { ApiCompetitionResponse } from '../types'
 import { Competition } from '@prisma/client'
-import { prisma } from '../..'
+import { prisma } from '..'
 
 /**
  * Makes an api call to retrieve a competition by league code

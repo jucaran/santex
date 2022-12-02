@@ -1,5 +1,6 @@
 export default `#graphql
+  union PlayersResult = Player | Coach
   type Query {
-    hello: String
+    players(leagueCode: String!, teamName: String): [PlayersResult]
   }
 `

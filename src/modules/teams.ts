@@ -1,9 +1,9 @@
-import logger from '../../logger'
+import logger from '../logger'
 import got from 'got'
 import { ApiCompetitionTeamsResponse } from '../types'
 import { Coach, Player, Team } from '@prisma/client'
 import { TeamWithSquad } from '../types'
-import { prisma } from '../..'
+import { prisma } from '..'
 
 /**
  * Makes an api call to retrieve all the teams in a given league
@@ -24,26 +24,26 @@ export const getTeams = async (leagueCode: string): Promise<TeamWithSquad[]> => 
   const teams = apiResponse.teams.map(apiTeam => {
     return {
       id: apiTeam.id,
-      address: apiTeam.address,
-      areaName: apiTeam.area.name,
-      leagueCode: leagueCode,
-      name: apiTeam.name,
-      shortName: apiTeam.shortName,
-      tla: apiTeam.tla,
+      address: apiTeam.address ?? '',
+      areaName: apiTeam.area.name ?? '',
+      leagueCode: leagueCode ?? '',
+      name: apiTeam.name ?? '',
+      shortName: apiTeam.shortName ?? '',
+      tla: apiTeam.tla ?? '',
       players: apiTeam.squad.map(apiPlayer => {
         return {
-          id: apiPlayer.id,
-          dateOfBirth: apiPlayer.dateOfBirth,
-          name: apiPlayer.name,
-          nationality: apiPlayer.nationality,
-          position: apiPlayer.position
+          id: apiPlayer.id ?? undefined,
+          dateOfBirth: apiPlayer.dateOfBirth ?? '',
+          name: apiPlayer.name ?? '',
+          nationality: apiPlayer.nationality ?? '',
+          position: apiPlayer.position ?? ''
         }
       }) as Player[],
       coach: {
-        id: apiTeam.coach.id,
-        dateOfBirth: apiTeam.coach.dateOfBirth,
-        name: apiTeam.coach.name,
-        nationality: apiTeam.coach.nationality
+        id: apiTeam.coach.id ?? undefined,
+        dateOfBirth: apiTeam.coach.dateOfBirth ?? '',
+        name: apiTeam.coach.name ?? '',
+        nationality: apiTeam.coach.nationality ?? ''
       } as Coach
     }
   })
@@ -65,7 +65,7 @@ export const saveTeams = async (teams: Team[]): Promise<void> => {
       leagueCode: team.leagueCode,
       name: team.name,
       shortName: team.shortName,
-      tla: team.tla,
+      tla: team.tla
     }))
   })
   logger.info('saved teams on db')

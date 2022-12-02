@@ -1,11 +1,13 @@
 export default `#graphql
   type Competition {
+    id: ID
     name: String!
     code: String!
     areaName: String!
   }
 
   type Team {
+    id: ID
     name: String!
     tla: String!
     shortName: String!
@@ -14,13 +16,15 @@ export default `#graphql
   }
 
   type Player {
-    name: String!
-    position: String!
-    dateOfBirth: String!
-    nationality: String!
+    id: ID
+    name: String
+    position: String
+    dateOfBirth: String
+    nationality: String
   }
 
   type Coach {
+    id: ID
     name: String
     dateOfBirth: String
     nationality: String
