@@ -1,6 +1,5 @@
 import logger from '../logger.js'
-import { Coach, Player } from '@prisma/client'
-import { prisma } from '../index.js'
+import { Coach, Player, PrismaClient } from '@prisma/client'
 import { TeamWithSquad } from '../types.js'
 import { GraphQLError } from 'graphql'
 
@@ -9,7 +8,10 @@ import { GraphQLError } from 'graphql'
  * @param leagueCode The code of league to retrieve players/coachs from
  * @param leagueCode An optional team name to filter players/coach by
  */
-export const getLeaguePlayers = async (leagueCode: string, teamName?: string): Promise<Array<Coach | Player>> => {
+export const getLeaguePlayers = async (
+  { leagueCode, teamName },
+  prisma: PrismaClient
+): Promise<Array<Coach | Player>> => {
   logger.info('Getting league players', { leagueCode, teamName })
   try {
     const teams = await prisma.team.findMany({
@@ -45,7 +47,7 @@ export const getLeaguePlayers = async (leagueCode: string, teamName?: string): P
  * @param teams an array of teams with its players and coach
  * @param leagueCode The code of the teams league
  */
-export const saveAllPlayers = async (teams: TeamWithSquad[]): Promise<void> => {
+export const saveAllPlayers = async (teams: TeamWithSquad[], prisma: PrismaClient): Promise<void> => {
   logger.info('Saving players/coachs on db')
 
   // Creates an array with all the players

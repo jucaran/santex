@@ -1,23 +1,33 @@
 import logger from '../logger.js'
 import got from 'got'
 import { ApiCompetitionResponse } from '../types.js'
-import { Competition } from '@prisma/client'
-import { prisma } from '../index.js'
+import { Competition, PrismaClient } from '@prisma/client'
+import { redis } from '../clients.js'
 import { getTeamsFromAPI, saveTeams } from '../modules/teams.js'
 import { saveAllPlayers } from '../modules/squad.js'
 import { GraphQLError } from 'graphql'
+import { ApolloContext } from '../index.js'
 
 /**
  * Takes a league code and saves the competition its teams and its players on the db
  * @param leagueCode The code of the required league
  */
-export const importLeague = async (leagueCode: string) => {
-  logger.info(`Importing league: ${leagueCode}`)
+export const importLeague = async (leagueCode: string, { ip, prisma }: ApolloContext) => {
+  logger.info(`Importing league: ${leagueCode}`, { ip })
+
+  const lastRead = await redis.get(leagueCode)
+  const secondsPassed = getTimePassed(lastRead)
+  logger.debug('Got last read from cache layer', { lastRead, secondsPassed })
+
+  if (lastRead && secondsPassed < 5) throw new GraphQLError(`Last read was ${secondsPassed} seconds ago`)
+
   try {
     const [teams, competition] = await Promise.all([getTeamsFromAPI(leagueCode), getCompetitionFromAPI(leagueCode)])
-    await saveCompetition(competition)
-    await saveTeams(teams)
-    await saveAllPlayers(teams)
+    await saveCompetition(competition, prisma)
+    await saveTeams(teams, prisma)
+    await saveAllPlayers(teams, prisma)
+
+    redis.set(leagueCode, new Date().toString())
 
     return 'League imported'
   } catch (e) {
@@ -58,7 +68,7 @@ export const getCompetitionFromAPI = async (leagueCode: string): Promise<Competi
  * @param competition The competition to save on the db
  * @returns
  */
-export const saveCompetition = async (competition: Competition): Promise<number> => {
+export const saveCompetition = async (competition: Competition, prisma: PrismaClient): Promise<number> => {
   const result = await prisma.competition.upsert({
     create: competition,
     update: {
@@ -70,4 +80,16 @@ export const saveCompetition = async (competition: Competition): Promise<number>
     }
   })
   return result.id
+}
+
+/**
+ * It takes a date string a returns the time passed in secons.
+ * @param dateString the string to compare from
+ * @returns
+ */
+const getTimePassed = (dateString?: string) => {
+  if (!dateString) return undefined
+  const lastRead = new Date(dateString)
+  const now = new Date()
+  return (now.getTime() - lastRead.getTime()) / 1000
 }

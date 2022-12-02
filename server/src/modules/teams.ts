@@ -1,18 +1,17 @@
 import got from 'got'
 import { GraphQLError } from 'graphql'
-import { Coach, Player, Team } from '@prisma/client'
+import { Coach, Player, PrismaClient, Team } from '@prisma/client'
 
 import { ApiCompetitionTeamsResponse } from '../types.js'
 import { TeamWithSquad } from '../types.js'
 import logger from '../logger.js'
-import { prisma } from '../index.js'
 
 /**
  * It takes a league code and returns a list of players/coachs from that league
  * @param leagueCode The code of league to retrieve players/coachs from
  * @param leagueCode An optional team name to filter players/coach by
  */
-export const getTeam = async (name: string): Promise<TeamWithSquad> => {
+export const getTeam = async (name: string, prisma: PrismaClient): Promise<TeamWithSquad> => {
   logger.info('Getting team', { name })
   try {
     return await prisma.team.findFirst({
@@ -85,7 +84,7 @@ export const getTeamsFromAPI = async (leagueCode: string): Promise<TeamWithSquad
  * Takes an array of teams and saves them on the db
  * @param teams The teams to save on the db
  */
-export const saveTeams = async (teams: Team[]): Promise<void> => {
+export const saveTeams = async (teams: Team[], prisma: PrismaClient): Promise<void> => {
   logger.info('Saving teams on db')
   await prisma.team.createMany({
     skipDuplicates: true,
