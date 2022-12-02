@@ -2,11 +2,12 @@
  * All the types of the GraphQL server
  */
 export default `#graphql
-  type Competition {
+  type League {
     id: ID
     name: String!
     code: String!
     areaName: String!
+    teams: [Team]
   }
 
   type Team {
@@ -16,6 +17,7 @@ export default `#graphql
     shortName: String!
     areaName: String!
     address: String!
+    leagues: [League]
     players: [Player]
     coach: Coach
   }

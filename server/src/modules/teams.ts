@@ -1,6 +1,6 @@
 import got from 'got'
 import { GraphQLError } from 'graphql'
-import { Coach, Player, PrismaClient, Team } from '@prisma/client'
+import { Coach, Competition, Player, PrismaClient, Team } from '@prisma/client'
 
 import { ApiCompetitionTeamsResponse } from '../types.js'
 import { TeamWithSquad } from '../types.js'
@@ -18,7 +18,8 @@ export const getTeam = async (name: string, { prisma }: ApolloContext): Promise<
     return await prisma.team.findFirst({
       include: {
         players: true,
-        coach: true
+        coach: true,
+        leagues: true
       },
       where: { name }
     })
@@ -85,18 +86,33 @@ export const getTeamsFromAPI = async (leagueCode: string): Promise<TeamWithSquad
  * Takes an array of teams and saves them on the db
  * @param teams The teams to save on the db
  */
-export const saveTeams = async (teams: Team[], prisma: PrismaClient): Promise<void> => {
+export const saveTeams = async (teams: Team[], leagueCode: string, prisma: PrismaClient): Promise<void> => {
   logger.info('Saving teams on db')
-  await prisma.team.createMany({
-    skipDuplicates: true,
-    data: teams.map(team => ({
-      id: team.id,
-      address: team.address,
-      areaName: team.areaName,
-      leagueCode: team.leagueCode,
-      name: team.name,
-      shortName: team.shortName,
-      tla: team.tla
-    }))
-  })
+  await Promise.all(
+    teams.map(team => {
+      return prisma.team.upsert({
+        where: { id: team.id },
+        create: {
+          id: team.id,
+          address: team.address,
+          areaName: team.areaName,
+          name: team.name,
+          shortName: team.shortName,
+          tla: team.tla,
+          leagues: {
+            connect: {
+              code: leagueCode
+            }
+          }
+        },
+        update: {
+          leagues: {
+            connect: {
+              code: leagueCode
+            }
+          }
+        }
+      })
+    })
+  )
 }

@@ -9,7 +9,7 @@
     "build": "tsc",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" --config ./.prettierrc",
-    "dev": "docker stop server && npx prisma generate && nodemon ."
+    "dev": "docker stop santex_server && npx prisma generate && nodemon ."
   },
   "keywords": [],
   "author": "",

@@ -1,7 +1,7 @@
 import logger from '../logger.js'
 import got from 'got'
 import { ApiCompetitionResponse } from '../types.js'
-import { Competition, PrismaClient } from '@prisma/client'
+import { Competition, PrismaClient, Team } from '@prisma/client'
 import { getTeamsFromAPI, saveTeams } from '../modules/teams.js'
 import { saveAllPlayers } from '../modules/squad.js'
 import { GraphQLError } from 'graphql'
@@ -26,8 +26,8 @@ export const importLeague = async (leagueCode: string, { ip, prisma, redis }: Ap
 
   try {
     const [teams, competition] = await Promise.all([getTeamsFromAPI(leagueCode), getCompetitionFromAPI(leagueCode)])
-    await saveCompetition(competition, prisma)
-    await saveTeams(teams, prisma)
+    await saveCompetition(competition, teams, prisma)
+    await saveTeams(teams, leagueCode, prisma)
     await saveAllPlayers(teams, prisma)
 
     redis.set(leagueCode + ip, new Date().toString())
@@ -71,9 +71,15 @@ export const getCompetitionFromAPI = async (leagueCode: string): Promise<Competi
  * @param competition The competition to save on the db
  * @returns
  */
-export const saveCompetition = async (competition: Competition, prisma: PrismaClient): Promise<number> => {
+export const saveCompetition = async (
+  competition: Competition,
+  teams: Team[],
+  prisma: PrismaClient
+): Promise<number> => {
   const result = await prisma.competition.upsert({
-    create: competition,
+    create: {
+      ...competition
+    },
     update: {
       areaName: competition.areaName,
       name: competition.name

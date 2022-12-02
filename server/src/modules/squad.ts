@@ -28,7 +28,9 @@ export const getLeaguePlayers = async (
           }
         }
       },
-      where: teamName ? { leagueCode, name: teamName } : { leagueCode }
+      where: teamName
+        ? { leagues: { every: { code: leagueCode } }, name: teamName }
+        : { leagues: { every: { code: leagueCode } } }
     })
 
     // This flattens the results array

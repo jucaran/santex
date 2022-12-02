@@ -21,8 +21,7 @@ model Competition {
 
 model Team {
   id         Int         @id @default(autoincrement())
-  league     Competition @relation(fields: [leagueCode], references: [code])
-  leagueCode String
+  leagues     Competition[]
   name       String
   tla        String
   shortName  String

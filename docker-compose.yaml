@@ -1,24 +1,26 @@
 version: '3.7'
 
 services:
-  server:
-    build:
-      context: ./server
-    ports: 
-      - ${SERVER_PORT}:${SERVER_PORT}
-    restart: unless-stopped
-    environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?connect_timeout=10
-      - REDIS_URL=redis://default:${REDIS_PASSWORD}@redis:6379
-      - LOGS_LEVEL=${LOGS_LEVEL}
-      - SERVER_PORT=${SERVER_PORT}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - API_TOKEN=${API_TOKEN}
-    depends_on:
-      - postgres
-      - redis
+  # server:
+  #   container_name: santex_server
+  #   build:
+  #     context: ./server
+  #   ports: 
+  #     - ${SERVER_PORT}:${SERVER_PORT}
+  #   restart: unless-stopped
+  #   environment:
+  #     - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?connect_timeout=10
+  #     - REDIS_URL=redis://default:${REDIS_PASSWORD}@redis:6379
+  #     - LOGS_LEVEL=${LOGS_LEVEL}
+  #     - SERVER_PORT=${SERVER_PORT}
+  #     - REDIS_PASSWORD=${REDIS_PASSWORD}
+  #     - API_TOKEN=${API_TOKEN}
+  #   depends_on:
+  #     - postgres
+  #     - redis
   
   postgres:
+    container_name: santex_postgres
     image: postgres:alpine
     restart: unless-stopped
     ports:
@@ -31,6 +33,7 @@ services:
       - ./postgres:/docker-entrypoint-initdb.d
 
   redis:
+    container_name: santex_redis
     image: redis:alpine
     restart: unless-stopped
     ports:
