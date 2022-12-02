@@ -6,5 +6,7 @@ export default `#graphql
   type Query {
     players(leagueCode: String!, teamName: String): [PlayersResult]
     team(name: String!): Team
+    league(name: String!): League
+    leagues: [League]
   }
 `

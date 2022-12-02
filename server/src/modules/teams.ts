@@ -1,6 +1,6 @@
 import got from 'got'
 import { GraphQLError } from 'graphql'
-import { Coach, Competition, Player, PrismaClient, Team } from '@prisma/client'
+import { Coach, Player, PrismaClient, Team } from '@prisma/client'
 
 import { ApiCompetitionTeamsResponse } from '../types.js'
 import { TeamWithSquad } from '../types.js'

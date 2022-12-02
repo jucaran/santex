@@ -1,11 +1,11 @@
 -- CreateTable
-CREATE TABLE "Competition" (
+CREATE TABLE "League" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "areaName" TEXT NOT NULL,
 
-    CONSTRAINT "Competition_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "League_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -44,22 +44,22 @@ CREATE TABLE "Coach" (
 );
 
 -- CreateTable
-CREATE TABLE "_CompetitionToTeam" (
+CREATE TABLE "_LeagueToTeam" (
     "A" INTEGER NOT NULL,
     "B" INTEGER NOT NULL
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Competition_code_key" ON "Competition"("code");
+CREATE UNIQUE INDEX "League_code_key" ON "League"("code");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Coach_teamId_key" ON "Coach"("teamId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "_CompetitionToTeam_AB_unique" ON "_CompetitionToTeam"("A", "B");
+CREATE UNIQUE INDEX "_LeagueToTeam_AB_unique" ON "_LeagueToTeam"("A", "B");
 
 -- CreateIndex
-CREATE INDEX "_CompetitionToTeam_B_index" ON "_CompetitionToTeam"("B");
+CREATE INDEX "_LeagueToTeam_B_index" ON "_LeagueToTeam"("B");
 
 -- AddForeignKey
 ALTER TABLE "Player" ADD CONSTRAINT "Player_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -68,7 +68,7 @@ ALTER TABLE "Player" ADD CONSTRAINT "Player_teamId_fkey" FOREIGN KEY ("teamId") 
 ALTER TABLE "Coach" ADD CONSTRAINT "Coach_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_CompetitionToTeam" ADD CONSTRAINT "_CompetitionToTeam_A_fkey" FOREIGN KEY ("A") REFERENCES "Competition"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_LeagueToTeam" ADD CONSTRAINT "_LeagueToTeam_A_fkey" FOREIGN KEY ("A") REFERENCES "League"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_CompetitionToTeam" ADD CONSTRAINT "_CompetitionToTeam_B_fkey" FOREIGN KEY ("B") REFERENCES "Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_LeagueToTeam" ADD CONSTRAINT "_LeagueToTeam_B_fkey" FOREIGN KEY ("B") REFERENCES "Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;

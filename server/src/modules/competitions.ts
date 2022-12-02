@@ -1,7 +1,7 @@
 import logger from '../logger.js'
 import got from 'got'
 import { ApiCompetitionResponse } from '../types.js'
-import { Competition, PrismaClient, Team } from '@prisma/client'
+import { League, PrismaClient, Team } from '@prisma/client'
 import { getTeamsFromAPI, saveTeams } from '../modules/teams.js'
 import { saveAllPlayers } from '../modules/squad.js'
 import { GraphQLError } from 'graphql'
@@ -45,13 +45,13 @@ export const importLeague = async (leagueCode: string, { ip, prisma, redis }: Ap
 }
 
 /**
- * Makes an api call to retrieve a competition by league code
+ * Makes an api call to retrieve a league by league code
  * @param leagueCode The code of the required league
  * @returns A promise that resolves in a parsed competition
  */
-export const getCompetitionFromAPI = async (leagueCode: string): Promise<Competition> => {
+export const getCompetitionFromAPI = async (leagueCode: string): Promise<League> => {
   logger.info(`Getting competition ${leagueCode} from API`)
-  const competition: ApiCompetitionResponse = await got(`http://api.football-data.org/v4/competitions/${leagueCode}`, {
+  const league: ApiCompetitionResponse = await got(`http://api.football-data.org/v4/competitions/${leagueCode}`, {
     headers: {
       'X-Auth-Token': process.env.API_TOKEN
     }
@@ -59,34 +59,69 @@ export const getCompetitionFromAPI = async (leagueCode: string): Promise<Competi
   logger.debug('Got competitions from API')
 
   return {
-    id: competition.id,
-    areaName: competition.area.name,
-    code: competition.code,
-    name: competition.name
+    id: league.id,
+    areaName: league.area.name,
+    code: league.code,
+    name: league.name
   }
 }
 
 /**
- * Takes a competitions and saves it on the db
- * @param competition The competition to save on the db
+ * Takes a league and saves it on the db
+ * @param league The competition to save on the db
  * @returns
  */
 export const saveCompetition = async (
-  competition: Competition,
+  league: League,
   teams: Team[],
   prisma: PrismaClient
 ): Promise<number> => {
-  const result = await prisma.competition.upsert({
+  const result = await prisma.league.upsert({
     create: {
-      ...competition
+      ...league
     },
     update: {
-      areaName: competition.areaName,
-      name: competition.name
+      areaName: league.areaName,
+      name: league.name
     },
     where: {
-      code: competition.code
+      code: league.code
     }
   })
   return result.id
+}
+
+/**
+ * Finds all the leagues on the db and returns them
+ */
+export const getAllLeagues = ({ prisma }: ApolloContext) => {
+  return prisma.league.findMany({
+    include: {
+      teams: {
+        include: {
+          players: true,
+          coach: true
+        }
+      }
+    }
+  })
+}
+
+/**
+ * Finds a league by name on the db and returns it
+ */
+export const getLeagueByName = (name, { prisma }: ApolloContext) => {
+  return prisma.league.findFirst({
+    where: {
+      name
+    },
+    include: {
+      teams: {
+        include: {
+          players: true,
+          coach: true
+        }
+      }
+    }
+  })
 }

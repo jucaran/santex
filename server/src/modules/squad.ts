@@ -7,7 +7,7 @@ import { ApolloContext } from '../server.js'
 /**
  * It takes a league code and returns a list of players/coachs from that league
  * @param leagueCode The code of league to retrieve players/coachs from
- * @param leagueCode An optional team name to filter players/coach by
+ * @param teamName An optional team name to filter players/coach by
  */
 export const getLeaguePlayers = async (
   { leagueCode, teamName },
@@ -19,12 +19,20 @@ export const getLeaguePlayers = async (
       include: {
         players: {
           include: {
-            team: true
+            team: {
+              include: {
+                leagues: true
+              }
+            }
           }
         },
         coach: {
           include: {
-            team: true
+            team: {
+              include: {
+                leagues: true
+              }
+            }
           }
         }
       },

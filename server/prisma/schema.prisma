@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl"]
 }
 
@@ -11,7 +11,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Competition {
+model League {
   id       Int    @id @default(autoincrement())
   name     String
   code     String @unique
@@ -20,15 +20,15 @@ model Competition {
 }
 
 model Team {
-  id         Int         @id @default(autoincrement())
-  leagues     Competition[]
-  name       String
-  tla        String
-  shortName  String
-  areaName   String
-  address    String
-  players    Player[]
-  coach      Coach?
+  id        Int      @id @default(autoincrement())
+  leagues   League[]
+  name      String
+  tla       String
+  shortName String
+  areaName  String
+  address   String
+  players   Player[]
+  coach     Coach?
 }
 
 model Player {
