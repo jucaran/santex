@@ -22,8 +22,10 @@ const server = new ApolloServer<ApolloContext>({ typeDefs, resolvers })
 
 export const startServer = async () => {
   // Start redis cache layer
-  await redis.connect()
-  logger.info('Redis connected')
+  await Promise.all([
+    redis.connect().then(() => logger.info('Redis cache layer connected')),
+    prisma.$connect().then(() => logger.info('Postgres db connected'))
+  ])
 
   // Start graphql server
   const { url } = await startStandaloneServer(server, {

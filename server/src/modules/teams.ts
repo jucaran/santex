@@ -13,7 +13,7 @@ import { ApolloContext } from '../server.js'
  * @param leagueCode An optional team name to filter players/coach by
  */
 export const getTeam = async (name: string, { prisma }: ApolloContext): Promise<TeamWithSquad> => {
-  logger.info('Getting team', { name })
+  logger.info('Getting team from db', { name })
   try {
     return await prisma.team.findFirst({
       include: {
@@ -39,7 +39,7 @@ export const getTeam = async (name: string, { prisma }: ApolloContext): Promise<
  * @returns A promise that resolves in an array of teams with it's players and coach
  */
 export const getTeamsFromAPI = async (leagueCode: string): Promise<TeamWithSquad[]> => {
-  logger.info(`Importing team: ${leagueCode}`)
+  logger.info(`Importing teams from API, league: ${leagueCode}`)
   const apiResponse: ApiCompetitionTeamsResponse = await got(
     `http://api.football-data.org/v4/competitions/${leagueCode}/teams`,
     {

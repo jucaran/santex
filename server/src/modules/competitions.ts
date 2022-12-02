@@ -48,7 +48,7 @@ export const importLeague = async (leagueCode: string, { ip, prisma, redis }: Ap
  * @returns A promise that resolves in a parsed competition
  */
 export const getCompetitionFromAPI = async (leagueCode: string): Promise<Competition> => {
-  logger.info(`Importing competition: ${leagueCode}`)
+  logger.info(`Getting competition ${leagueCode} from API`)
   const competition: ApiCompetitionResponse = await got(`http://api.football-data.org/v4/competitions/${leagueCode}`, {
     headers: {
       'X-Auth-Token': process.env.API_TOKEN
