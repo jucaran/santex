@@ -1,11 +1,12 @@
 {
   "watch": ["src"],
   "ext": "ts",
-  "exec": "npx prisma generate && ts-node ./src/index.ts",
+  "exec": "ts-node ./src/index.ts",
   "env": {
     "SERVER_PORT": "4000",
     "LOGS_LEVEL": "debug",
     "DATABASE_URL": "postgresql://santex:santex@localhost:5432/santex",
+    "REDIS_URL": "redis://default:santex@localhost:6379",
     "API_TOKEN": "fc9da337302c46509c5a08639aab1cd3"
   }
 }
