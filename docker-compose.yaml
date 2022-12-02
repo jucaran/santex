@@ -2,15 +2,14 @@ version: '3.7'
 
 services:
   server:
-    container_name: server
     build:
       context: ./server
     ports: 
       - ${SERVER_PORT}:${SERVER_PORT}
     restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_SERVICE}:${POSTGRES_PORT}/${POSTGRES_DB}
-      - REDIS_URL=redis://default:${REDIS_PASSWORD}@${REDIS_SERVICE}:${REDIS_PORT}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?connect_timeout=10
+      - REDIS_URL=redis://default:${REDIS_PASSWORD}@redis:6379
       - LOGS_LEVEL=${LOGS_LEVEL}
       - SERVER_PORT=${SERVER_PORT}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -20,11 +19,10 @@ services:
       - redis
   
   postgres:
-    container_name: ${POSTGRES_SERVICE}
     image: postgres:alpine
     restart: unless-stopped
     ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+      - ${POSTGRES_PORT}:5432
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -33,9 +31,8 @@ services:
       - ./postgres:/docker-entrypoint-initdb.d
 
   redis:
-    container_name: ${REDIS_SERVICE}
     image: redis:alpine
     restart: unless-stopped
     ports:
-      - ${REDIS_PORT}:${REDIS_PORT}
+      - ${REDIS_PORT}:6379
     command: redis-server --requirepass ${REDIS_PASSWORD}

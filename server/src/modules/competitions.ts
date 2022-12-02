@@ -19,8 +19,10 @@ export const importLeague = async (leagueCode: string, { ip, prisma, redis }: Ap
   const secondsPassed = getTimePassed(lastRead)
   logger.debug('Got last read from cache layer', { lastRead, secondsPassed })
 
-  if (lastRead && secondsPassed < 5)
+  if (lastRead && secondsPassed < 5) {
+    logger.warn('Request not accepted because of timestamp difference', { secondsPassed, ip })
     throw new GraphQLError(`Last read was ${secondsPassed} seconds ago, only a request every 5 seconds is allowed`)
+  }
 
   try {
     const [teams, competition] = await Promise.all([getTeamsFromAPI(leagueCode), getCompetitionFromAPI(leagueCode)])

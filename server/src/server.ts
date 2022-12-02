@@ -21,9 +21,12 @@ export interface ApolloContext {
 const server = new ApolloServer<ApolloContext>({ typeDefs, resolvers })
 
 export const startServer = async () => {
-  // Start redis cache layer
+
+  logger.info('Connecting dbs...')
   await Promise.all([
+    // Conects redis cache layer
     redis.connect().then(() => logger.info('Redis cache layer connected')),
+    // Contects postgres db
     prisma.$connect().then(() => logger.info('Postgres db connected'))
   ])
 
