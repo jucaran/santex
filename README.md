@@ -31,7 +31,6 @@ It watches for changes on the ``./server/src`` directory and restarts the node a
 <br>
 
 ## About the decision making
-Because of the tight relationships between the data types and the fact that we have little writing on db I thought that the best choice in this case was a SQL database. <br>
-Then I added a redis cache to handle the API request limitations.
-
-I chose to use prisma as an ORM beacause of its type safety models.
+* Because of the tight relationships between the data types and the fact that we have little writing on db I thought that the best choice in this case was a SQL database. <br>
+* Then I added a redis cache to handle the API request limitations.
+* I chose to use prisma as an ORM beacause of its type safety models.
