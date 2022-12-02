@@ -2,6 +2,14 @@ import { prisma, redis } from './clients.js'
 import logger from './logger.js'
 import { startServer } from './server.js'
 
+/*
+  This file is used to handle sistem errors and unhandledExceptions.
+  The server is init at `./server.ts`
+*/
+
+/**
+ * This function is triggered when there is an uncaught exception, it disconnects from the cache layer and the db
+ */
 const disconnect = async () => {
   await Promise.all([prisma.$disconnect(), redis.disconnect()])
   process.exit(1)
@@ -24,5 +32,5 @@ process.on('SIGTERM', err => {
 
 startServer().catch((error: Error) => {
   logger.error('Error running server', { error })
-  disconnect()
+  setTimeout(disconnect, 1000).unref()
 })

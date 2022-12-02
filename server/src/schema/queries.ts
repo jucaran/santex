@@ -1,3 +1,6 @@
+/**
+ * All the queries of the GraphQL server
+ */
 export default `#graphql
   union PlayersResult = Player | Coach
   type Query {

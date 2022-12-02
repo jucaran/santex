@@ -11,17 +11,20 @@ import logger from './logger.js'
 import { redis, prisma } from './clients.js'
 import { getIp } from './utils.js'
 
-const typeDefs = [schemaTypes, queries, mutations].join('')
-
 export interface ApolloContext {
   ip?: string
   prisma: PrismaClient
   redis: RedisClientType<Record<string, never>, Record<string, never>>
 }
+
+const typeDefs = [schemaTypes, queries, mutations].join('')
+
 const server = new ApolloServer<ApolloContext>({ typeDefs, resolvers })
 
+/**
+ * It connects the the cache layer and the db and then it starts a graphQL server
+ */
 export const startServer = async () => {
-
   logger.info('Connecting dbs...')
   await Promise.all([
     // Conects redis cache layer

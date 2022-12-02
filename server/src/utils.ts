@@ -1,9 +1,11 @@
+import { IncomingMessage } from 'http2-wrapper'
+
 /**
  * It takes a request object and returns x-forward-for header or it's socket ip
- * @param dateString the string to compare from
+ * @param req the request object to get the ip from
  * @returns
  */
-export const getIp = req => {
+export const getIp = (req: IncomingMessage) => {
   return (
     (Array.isArray(req.headers['x-forwarded-for'])
       ? req.headers['x-forwarded-for'].shift()

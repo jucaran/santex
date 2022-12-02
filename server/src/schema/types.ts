@@ -1,3 +1,6 @@
+/**
+ * All the types of the GraphQL server
+ */
 export default `#graphql
   type Competition {
     id: ID

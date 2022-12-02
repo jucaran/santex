@@ -79,6 +79,9 @@ export interface ApiCompetitionTeamsResponse {
   teams: ApiTeam[]
 }
 
+/**
+ * The Team Model with its players and coach added
+ */
 export interface TeamWithSquad extends Team {
   players: Player[]
   coach: Coach
