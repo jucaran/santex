@@ -2,6 +2,43 @@ import logger from '../logger'
 import { Coach, Player } from '@prisma/client'
 import { prisma } from '..'
 import { TeamWithSquad } from '../types'
+import { GraphQLError } from 'graphql'
+
+/**
+ * It takes a league code and returns a list of players/coachs from that league
+ * @param leagueCode The code of league to retrieve players/coachs from
+ * @param leagueCode An optional team name to filter players/coach by
+ */
+export const getLeaguePlayers = async (leagueCode: string, teamName?: string): Promise<Array<Coach | Player>> => {
+  logger.info('Getting league players', { leagueCode, teamName })
+  try {
+    const teams = await prisma.team.findMany({
+      include: {
+        players: true,
+        coach: true
+      },
+      where: teamName ? { leagueCode, name: teamName } : { leagueCode }
+    })
+
+    // This flattens the results array
+    return teams.reduce((acc, team) => {
+      // If there are players we add them
+      if (team.players.length) return [...acc, ...team.players]
+      // If there are not players but there is a coach we add them
+      if (team.coach != null) return [...acc, team.coach]
+      // If there are neither we dont add anything
+      else return acc
+    }, [])
+  } catch (e) {
+    logger.error('Error trying to import league', { status: e.status, message: e.message, error: e })
+    throw new GraphQLError('Error trying to import league', {
+      extensions: {
+        message: e.message,
+        code: e.code
+      }
+    })
+  }
+}
 
 /**
  * It takes an array of teams and save all of it's players/coach ond the db
@@ -65,30 +102,4 @@ const saveCoach = async (coach: Coach, teamId: number): Promise<void> => {
     },
     where: { teamId }
   })
-}
-
-/**
- * It takes a league code and returns a list of players/coachs from that league
- * @param leagueCode The code of league to retrieve players/coachs from
- * @param leagueCode An optional team name to filter players/coach by
- */
-export const getLeaguePlayers = async (leagueCode: string, teamName?: string): Promise<Array<Coach | Player>> => {
-  logger.info('Getting league players', { leagueCode, teamName })
-  const teams = await prisma.team.findMany({
-    include: {
-      players: true,
-      coach: true
-    },
-    where: teamName ? { leagueCode, name: teamName } : { leagueCode }
-  })
-
-  // This flattens the results array
-  return teams.reduce((acc, team) => {
-    // If there are players we add them
-    if (team.players.length) return [...acc, ...team.players]
-    // If there are not players but there is a coach we add them
-    if (team.coach != null) return [...acc, team.coach]
-    // If there are neither we dont add anything
-    else return acc
-  }, [])
 }

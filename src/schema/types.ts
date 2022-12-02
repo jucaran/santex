@@ -13,6 +13,8 @@ export default `#graphql
     shortName: String!
     areaName: String!
     address: String!
+    players: [Player]
+    coach: Coach
   }
 
   type Player {

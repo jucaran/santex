@@ -1,16 +1,44 @@
-import logger from '../logger'
 import got from 'got'
-import { ApiCompetitionTeamsResponse } from '../types'
+import { GraphQLError } from 'graphql'
 import { Coach, Player, Team } from '@prisma/client'
+
+import { ApiCompetitionTeamsResponse } from '../types'
 import { TeamWithSquad } from '../types'
+import logger from '../logger'
 import { prisma } from '..'
+
+/**
+ * It takes a league code and returns a list of players/coachs from that league
+ * @param leagueCode The code of league to retrieve players/coachs from
+ * @param leagueCode An optional team name to filter players/coach by
+ */
+export const getTeam = async (name: string): Promise<TeamWithSquad> => {
+  logger.info('Getting team', { name })
+  try {
+    return await prisma.team.findFirst({
+      include: {
+        players: true,
+        coach: true
+      },
+      where: { name }
+    })
+  } catch (e) {
+    logger.error('Error trying to import league', { status: e.status, message: e.message, error: e })
+    throw new GraphQLError('Error trying to import league', {
+      extensions: {
+        message: e.message,
+        code: e.code
+      }
+    })
+  }
+}
 
 /**
  * Makes an api call to retrieve all the teams in a given league
  * @param leagueCode The code of the required league
  * @returns A promise that resolves in an array of teams with it's players and coach
  */
-export const getTeams = async (leagueCode: string): Promise<TeamWithSquad[]> => {
+export const getTeamsFromAPI = async (leagueCode: string): Promise<TeamWithSquad[]> => {
   logger.info(`Importing team: ${leagueCode}`)
   const apiResponse: ApiCompetitionTeamsResponse = await got(
     `http://api.football-data.org/v4/competitions/${leagueCode}/teams`,

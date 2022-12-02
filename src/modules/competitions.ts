@@ -3,13 +3,40 @@ import got from 'got'
 import { ApiCompetitionResponse } from '../types'
 import { Competition } from '@prisma/client'
 import { prisma } from '..'
+import { getTeamsFromAPI, saveTeams } from '../modules/teams'
+import { saveAllPlayers } from '../modules/squad'
+import { GraphQLError } from 'graphql'
+
+/**
+ * Takes a league code and saves the competition its teams and its players on the db
+ * @param leagueCode The code of the required league
+ */
+export const importLeague = async (leagueCode: string) => {
+  logger.info(`Importing league: ${leagueCode}`)
+  try {
+    const [teams, competition] = await Promise.all([getTeamsFromAPI(leagueCode), getCompetitionFromAPI(leagueCode)])
+    await saveCompetition(competition)
+    await saveTeams(teams)
+    await saveAllPlayers(teams)
+
+    return 'League imported'
+  } catch (e) {
+    logger.error('Error trying to import league', { status: e.status, message: e.message, error: e })
+    throw new GraphQLError('Error trying to import league', {
+      extensions: {
+        message: e.message,
+        code: e.code
+      }
+    })
+  }
+}
 
 /**
  * Makes an api call to retrieve a competition by league code
  * @param leagueCode The code of the required league
  * @returns A promise that resolves in a parsed competition
  */
-export const getCompetition = async (leagueCode: string): Promise<Competition> => {
+export const getCompetitionFromAPI = async (leagueCode: string): Promise<Competition> => {
   logger.info(`Importing competition: ${leagueCode}`)
   const competition: ApiCompetitionResponse = await got(`http://api.football-data.org/v4/competitions/${leagueCode}`, {
     headers: {
@@ -29,7 +56,7 @@ export const getCompetition = async (leagueCode: string): Promise<Competition> =
 /**
  * Takes a competitions and saves it on the db
  * @param competition The competition to save on the db
- * @returns 
+ * @returns
  */
 export const saveCompetition = async (competition: Competition): Promise<number> => {
   const result = await prisma.competition.upsert({
