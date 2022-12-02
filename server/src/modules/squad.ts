@@ -17,8 +17,16 @@ export const getLeaguePlayers = async (
   try {
     const teams = await prisma.team.findMany({
       include: {
-        players: true,
-        coach: true
+        players: {
+          include: {
+            team: true
+          }
+        },
+        coach: {
+          include: {
+            team: true
+          }
+        }
       },
       where: teamName ? { leagueCode, name: teamName } : { leagueCode }
     })

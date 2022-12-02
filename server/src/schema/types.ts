@@ -23,6 +23,7 @@ export default `#graphql
     position: String
     dateOfBirth: String
     nationality: String
+    team: Team
   }
 
   type Coach {
@@ -30,5 +31,6 @@ export default `#graphql
     name: String
     dateOfBirth: String
     nationality: String
+    team: Team
   }
 `;
