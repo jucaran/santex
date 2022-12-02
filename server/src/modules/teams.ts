@@ -5,7 +5,7 @@ import { Coach, Player, PrismaClient, Team } from '@prisma/client'
 import { ApiCompetitionTeamsResponse } from '../types.js'
 import { TeamWithSquad } from '../types.js'
 import logger from '../logger.js'
-import { ApolloContext } from '../index.js'
+import { ApolloContext } from '../server.js'
 
 /**
  * It takes a league code and returns a list of players/coachs from that league

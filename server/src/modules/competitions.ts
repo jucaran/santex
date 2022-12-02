@@ -5,7 +5,8 @@ import { Competition, PrismaClient } from '@prisma/client'
 import { getTeamsFromAPI, saveTeams } from '../modules/teams.js'
 import { saveAllPlayers } from '../modules/squad.js'
 import { GraphQLError } from 'graphql'
-import { ApolloContext } from '../index.js'
+import { ApolloContext } from '../server.js'
+import { getTimePassed } from '../utils.js'
 
 /**
  * Takes a league code and saves the competition its teams and its players on the db
@@ -19,7 +20,7 @@ export const importLeague = async (leagueCode: string, { ip, prisma, redis }: Ap
   logger.debug('Got last read from cache layer', { lastRead, secondsPassed })
 
   if (lastRead && secondsPassed < 5)
-    throw new GraphQLError(`Last read was ${secondsPassed} seconds ago, only a request 5 secons is allowed`)
+    throw new GraphQLError(`Last read was ${secondsPassed} seconds ago, only a request every 5 seconds is allowed`)
 
   try {
     const [teams, competition] = await Promise.all([getTeamsFromAPI(leagueCode), getCompetitionFromAPI(leagueCode)])
@@ -80,16 +81,4 @@ export const saveCompetition = async (competition: Competition, prisma: PrismaCl
     }
   })
   return result.id
-}
-
-/**
- * It takes a date string a returns the time passed in secons.
- * @param dateString the string to compare from
- * @returns
- */
-const getTimePassed = (dateString?: string) => {
-  if (!dateString) return undefined
-  const lastRead = new Date(dateString)
-  const now = new Date()
-  return (now.getTime() - lastRead.getTime()) / 1000
 }

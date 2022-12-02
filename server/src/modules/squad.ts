@@ -2,7 +2,7 @@ import logger from '../logger.js'
 import { Coach, Player, PrismaClient } from '@prisma/client'
 import { TeamWithSquad } from '../types.js'
 import { GraphQLError } from 'graphql'
-import { ApolloContext } from '../index.js'
+import { ApolloContext } from '../server.js'
 
 /**
  * It takes a league code and returns a list of players/coachs from that league

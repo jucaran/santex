@@ -1,4 +1,4 @@
-import { ApolloContext } from '../index.js'
+import { ApolloContext } from '../server.js'
 import { importLeague } from '../modules/competitions.js'
 import { getLeaguePlayers } from '../modules/squad.js'
 import { getTeam } from '../modules/teams.js'
