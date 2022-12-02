@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_SERVICE}:${POSTGRES_PORT}/${POSTGRES_DB}
-      - REDIS_URL=redis://${REDIS_PASSWORD}@${REDIS_SERVICE}:${REDIS_PORT}
+      - REDIS_URL=redis://default:${REDIS_PASSWORD}@${REDIS_SERVICE}:${REDIS_PORT}
       - LOGS_LEVEL=${LOGS_LEVEL}
       - SERVER_PORT=${SERVER_PORT}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -21,7 +21,7 @@ services:
   
   postgres:
     container_name: ${POSTGRES_SERVICE}
-    image: postgres
+    image: postgres:alpine
     restart: unless-stopped
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
