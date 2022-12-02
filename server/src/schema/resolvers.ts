@@ -1,6 +1,6 @@
-import { importLeague } from '../modules/competitions'
-import { getLeaguePlayers } from '../modules/squad'
-import { getTeam } from '../modules/teams'
+import { importLeague } from '../modules/competitions.js'
+import { getLeaguePlayers } from '../modules/squad.js'
+import { getTeam } from '../modules/teams.js'
 
 export default {
   PlayersResult: {

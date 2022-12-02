@@ -2,10 +2,10 @@ import got from 'got'
 import { GraphQLError } from 'graphql'
 import { Coach, Player, Team } from '@prisma/client'
 
-import { ApiCompetitionTeamsResponse } from '../types'
-import { TeamWithSquad } from '../types'
-import logger from '../logger'
-import { prisma } from '..'
+import { ApiCompetitionTeamsResponse } from '../types.js'
+import { TeamWithSquad } from '../types.js'
+import logger from '../logger.js'
+import { prisma } from '../index.js'
 
 /**
  * It takes a league code and returns a list of players/coachs from that league
@@ -61,6 +61,7 @@ export const getTeamsFromAPI = async (leagueCode: string): Promise<TeamWithSquad
       players: apiTeam.squad.map(apiPlayer => {
         return {
           id: apiPlayer.id ?? undefined,
+          teamId: apiTeam.id,
           dateOfBirth: apiPlayer.dateOfBirth ?? '',
           name: apiPlayer.name ?? '',
           nationality: apiPlayer.nationality ?? '',
@@ -69,6 +70,7 @@ export const getTeamsFromAPI = async (leagueCode: string): Promise<TeamWithSquad
       }) as Player[],
       coach: {
         id: apiTeam.coach.id ?? undefined,
+        teamId: apiTeam.id,
         dateOfBirth: apiTeam.coach.dateOfBirth ?? '',
         name: apiTeam.coach.name ?? '',
         nationality: apiTeam.coach.nationality ?? ''
@@ -84,6 +86,7 @@ export const getTeamsFromAPI = async (leagueCode: string): Promise<TeamWithSquad
  * @param teams The teams to save on the db
  */
 export const saveTeams = async (teams: Team[]): Promise<void> => {
+  logger.info('Saving teams on db')
   await prisma.team.createMany({
     skipDuplicates: true,
     data: teams.map(team => ({
@@ -96,5 +99,4 @@ export const saveTeams = async (teams: Team[]): Promise<void> => {
       tla: team.tla
     }))
   })
-  logger.info('saved teams on db')
 }

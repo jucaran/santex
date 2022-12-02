@@ -1,7 +1,7 @@
-import logger from '../logger'
+import logger from '../logger.js'
 import { Coach, Player } from '@prisma/client'
-import { prisma } from '..'
-import { TeamWithSquad } from '../types'
+import { prisma } from '../index.js'
+import { TeamWithSquad } from '../types.js'
 import { GraphQLError } from 'graphql'
 
 /**
@@ -46,60 +46,40 @@ export const getLeaguePlayers = async (leagueCode: string, teamName?: string): P
  * @param leagueCode The code of the teams league
  */
 export const saveAllPlayers = async (teams: TeamWithSquad[]): Promise<void> => {
-  await Promise.all(
-    teams.map(team => {
-      // If we have players we save them on the db
-      if (team.players.length) return saveTeamPlayers(team.players, team.id)
-      // If not we save the coach on the db
-      else return saveCoach(team.coach, team.id)
-    })
-  )
-}
+  logger.info('Saving players/coachs on db')
 
-/**
- * Save an array of players on the db
- * @param players The players to save on the db
- */
-const saveTeamPlayers = async (players: Player[], teamId: number): Promise<void> => {
-  logger.debug('Saving players on db', { teamId })
-  await prisma.player.createMany({
-    skipDuplicates: true,
-    data: players.map(player => {
-      return {
-        teamId,
+  // Creates an array with all the players
+  const playersToAdd = teams.reduce((acc, team) => {
+    return [...acc, ...team.players]
+  }, [])
+
+  // Creates an array with all the coaches of the teams without players
+  const coachesToAdd = teams.reduce((acc, team) => (team.players.length ? acc : [...acc, team.coach]), [])
+
+  await Promise.all([
+    // We add all the players in the array to the db
+    prisma.player.createMany({
+      skipDuplicates: true,
+      data: playersToAdd.map((player: Player) => ({
+        teamId: player.teamId,
         id: player.id,
         dateOfBirth: player.dateOfBirth,
         name: player.name,
         nationality: player.nationality,
         position: player.position
-      }
+      }))
+    }),
+    // The same with all the coachs
+    prisma.coach.createMany({
+      skipDuplicates: true,
+      data: coachesToAdd.map((coach: Coach) => ({
+        teamId: coach.teamId,
+        id: coach.id,
+        dateOfBirth: coach.dateOfBirth,
+        name: coach.name,
+        nationality: coach.nationality
+      }))
     })
-  })
-}
-
-/**
- * Save a coach on the db
- * @param players The players to save on the db
- * @param teamId  The id of the team
- * @returns The count of the created players
- */
-const saveCoach = async (coach: Coach, teamId: number): Promise<void> => {
-  if (!coach.id) return
-  await prisma.coach.upsert({
-    create: {
-      teamId,
-      id: coach.id,
-      dateOfBirth: coach.dateOfBirth,
-      name: coach.name,
-      nationality: coach.nationality
-    },
-    update: {
-      teamId,
-      id: coach.id,
-      dateOfBirth: coach.dateOfBirth,
-      name: coach.name,
-      nationality: coach.nationality
-    },
-    where: { teamId }
-  })
+  ])
+  logger.info('Players saved')
 }

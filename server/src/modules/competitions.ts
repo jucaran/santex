@@ -1,10 +1,10 @@
-import logger from '../logger'
+import logger from '../logger.js'
 import got from 'got'
-import { ApiCompetitionResponse } from '../types'
+import { ApiCompetitionResponse } from '../types.js'
 import { Competition } from '@prisma/client'
-import { prisma } from '..'
-import { getTeamsFromAPI, saveTeams } from '../modules/teams'
-import { saveAllPlayers } from '../modules/squad'
+import { prisma } from '../index.js'
+import { getTeamsFromAPI, saveTeams } from '../modules/teams.js'
+import { saveAllPlayers } from '../modules/squad.js'
 import { GraphQLError } from 'graphql'
 
 /**

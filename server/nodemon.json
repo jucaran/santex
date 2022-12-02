@@ -1,8 +1,9 @@
 {
   "watch": ["src"],
   "ext": "ts",
-  "exec": "echo DATABASE_URL=$DATABASE_URL > .env && npx prisma generate && ts-node ./src/index.ts",
+  "exec": "npx prisma generate && ts-node ./src/index.ts",
   "env": {
+    "SERVER_PORT": "4000",
     "LOGS_LEVEL": "debug",
     "DATABASE_URL": "postgresql://santex:santex@localhost:5432/santex",
     "API_TOKEN": "fc9da337302c46509c5a08639aab1cd3"
