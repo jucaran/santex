@@ -9,7 +9,7 @@ import { Coach, Player, Team } from '../db/entities.js'
 
 /**
  * It takes a team name and returns a team object
- * 
+ *
  * @param name The name of the team that we want
  */
 export const getTeam = async (_, { name }, { db }: ApolloContext): Promise<Team> => {
@@ -40,7 +40,7 @@ export const getTeam = async (_, { name }, { db }: ApolloContext): Promise<Team>
  * @param leagueCode The code of the required league
  * @returns A promise that resolves in an array of teams with it's players and coach
  */
-export const getTeamsFromAPI = async (leagueCode: string): Promise<Team[]> => {
+export const getTeamsFromAPI = async (leagueCode: string): Promise<{ teams: Team[]; players: Player[] }> => {
   logger.info(`Importing teams from API, league: ${leagueCode}`)
   const apiResponse: ApiCompetitionTeamsResponse = await got(
     `http://api.football-data.org/v4/competitions/${leagueCode}/teams`,
@@ -60,16 +60,7 @@ export const getTeamsFromAPI = async (leagueCode: string): Promise<Team[]> => {
       name: apiTeam.name ?? '',
       shortName: apiTeam.shortName ?? '',
       tla: apiTeam.tla ?? '',
-      players: apiTeam.squad.map(apiPlayer => {
-        return {
-          id: apiPlayer.id ?? undefined,
-          teamId: apiTeam.id,
-          dateOfBirth: apiPlayer.dateOfBirth ?? '',
-          name: apiPlayer.name ?? '',
-          nationality: apiPlayer.nationality ?? '',
-          position: apiPlayer.position ?? ''
-        }
-      }) as Player[],
+      playersIds: apiTeam.squad.map(player => player.id),
       coach: {
         id: apiTeam.coach.id ?? undefined,
         teamId: apiTeam.id,
@@ -80,7 +71,22 @@ export const getTeamsFromAPI = async (leagueCode: string): Promise<Team[]> => {
     }
   })
 
-  return teams
+  const players: Player[] = apiResponse.teams.reduce(
+    (acc, curr) => [
+      ...acc,
+      ...curr.squad.map(player => ({
+        id: player.id ?? undefined,
+        teamId: player.id,
+        dateOfBirth: player.dateOfBirth ?? '',
+        name: player.name ?? '',
+        nationality: player.nationality ?? '',
+        position: player.position ?? ''
+      }))
+    ],
+    []
+  )
+
+  return { teams, players }
 }
 
 /**
@@ -98,11 +104,10 @@ export const getTeamPlayers = (team: Team, _: unknown, { db }: ApolloContext) =>
  * This function returs the coach of a team
  */
 export const getTeamCoach = (team: Team, _: unknown, { db }: ApolloContext) =>
-      !team.playersIds.length
-        ? db.getRepository(Coach).findOne({
-            where: {
-              id: team.coachId
-            }
-          })
-        : null
-
+  !team.playersIds.length
+    ? db.getRepository(Coach).findOne({
+        where: {
+          id: team.coachId
+        }
+      })
+    : null

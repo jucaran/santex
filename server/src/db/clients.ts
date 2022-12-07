@@ -15,6 +15,6 @@ export const AppDataSource = new DataSource({
   url: process.env.DATABASE_URL,
   type: 'postgres',
   synchronize: true,
-  logging: false,
+  // logging: true,
   entities: [League, Team, Player, Coach],
 })

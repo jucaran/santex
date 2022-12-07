@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, ManyToOne, Relation } from 'typeorm'
+import { Entity, Column, PrimaryColumn, ManyToOne, Relation, RelationId } from 'typeorm'
 import { Team } from './Team.js'
 
 @Entity()
@@ -18,6 +18,9 @@ export class Player {
   @Column()
   nationality: string
 
-  @ManyToOne(() => Team, (team) => team.players)
-  team?: Relation<Team>
+  // @ManyToOne(() => Team, (team) => team.players)
+  // team?: Relation<Team>
+
+  @Column()
+  teamId: number
 }

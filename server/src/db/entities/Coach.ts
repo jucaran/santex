@@ -1,7 +1,8 @@
-import { Entity, Column, PrimaryColumn, OneToOne, Relation, RelationId } from 'typeorm'
+import { Entity, Column, PrimaryColumn, OneToOne, Relation, RelationId, Unique } from 'typeorm'
 import { Team } from '../entities.js'
 
 @Entity()
+@Unique(['teamId'])
 export class Coach {
   @PrimaryColumn()
   id: number

@@ -25,7 +25,10 @@ export const importLeague = async (_, { leagueCode }, { db, redis, ip }: ApolloC
 
   try {
     // Gets data from API
-    const [teams, league] = await Promise.all([getTeamsFromAPI(leagueCode), getCompetitionFromAPI(leagueCode)])
+    const [{ teams, players }, league] = await Promise.all([
+      getTeamsFromAPI(leagueCode),
+      getCompetitionFromAPI(leagueCode)
+    ])
 
     const teamsEntities = teams.map(team => {
       const teamEntity = db.getRepository(Team).create({
@@ -35,22 +38,30 @@ export const importLeague = async (_, { leagueCode }, { db, redis, ip }: ApolloC
         name: team.name,
         shortName: team.shortName,
         tla: team.tla,
-        playersIds: team.players.map(({id}) => id),
+        playersIds: team.playersIds
       })
       if (team.coach.id) {
         teamEntity.coachId = team.coach.id
       }
-      teamEntity.players = team.players.map(player => db.getRepository(Player).create(player))
       return teamEntity
     })
 
-    await db.createQueryBuilder().insert().into(Team).values(teamsEntities).orIgnore().execute()
+    const playersEntities = players.map((player: Player) => db.getRepository(Player).create(player))
+
+    await Promise.all([
+      db.createQueryBuilder().insert().into(Team).values(teamsEntities).orIgnore().execute(),
+      db.createQueryBuilder().insert().into(Player).values(playersEntities).orIgnore().execute()
+    ])
 
     const leagueEntity = db.getRepository(League).create(league)
-    const saved = await db.getRepository(League).findOne({ where: { code: leagueCode } })
-    if (!saved) {
+    const leagueSaved = await db.getRepository(League).findOne({ where: { code: leagueCode } })
+    if (!leagueSaved) {
       await db.manager.save(leagueEntity)
-      await db.createQueryBuilder().relation(League, 'teams').of(leagueEntity).add(teamsEntities)
+      await db
+        .createQueryBuilder()
+        .relation(League, 'teams')
+        .of(leagueEntity)
+        .add(teamsEntities.map(x => x.id))
     } else {
       leagueEntity.teams = teamsEntities
       await db.manager.save(leagueEntity)

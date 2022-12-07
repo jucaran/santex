@@ -24,17 +24,17 @@ export class Team {
   @ManyToMany(() => League, (league) => league.teams, { cascade: ['insert', 'update']})
   leagues?: Relation<League[]>
 
-  @OneToMany(() => Player, (player) => player.team, { cascade: true })
-  players?: Relation<Player[]>
+  // @OneToMany(() => Player, (player) => player.team, { cascade: true })
+  // players?: Relation<Player[]>
 
   @Column('int', { array: true })
-  @RelationId((team: Team) => team.players)
+  // @RelationId((team: Team) => team.players)
   playersIds?: number[]
 
-  @OneToMany(() => Coach, (coach) => coach.team)
+  @OneToMany(() => Coach, (coach) => coach.team, { nullable: true, cascade: true })
   coach?: Relation<Coach>
 
-  @Column()
+  @Column({ nullable: true })
   @RelationId((team: Team) => team.coach)
   coachId?: number
 }
