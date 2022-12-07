@@ -1,4 +1,4 @@
-import { prisma, redis } from './clients.js'
+import { AppDataSource, redis } from './db/clients.js'
 import logger from './logger.js'
 import { startServer } from './server.js'
 
@@ -11,7 +11,7 @@ import { startServer } from './server.js'
  * This function is triggered when there is an uncaught exception, it disconnects from the cache layer and the db
  */
 const disconnect = async () => {
-  await Promise.all([prisma.$disconnect(), redis.disconnect()])
+  await Promise.all([AppDataSource.destroy(), redis.disconnect()])
   process.exit(1)
 }
 

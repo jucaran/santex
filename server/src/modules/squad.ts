@@ -1,8 +1,8 @@
 import logger from '../logger.js'
-import { Coach, Player, PrismaClient } from '@prisma/client'
-import { TeamWithSquad } from '../types.js'
 import { GraphQLError } from 'graphql'
 import { ApolloContext } from '../server.js'
+import { Team, Coach, Player, League } from '../db/entities.js'
+import { In } from 'typeorm'
 
 /**
  * It takes a league code and returns a list of players/coachs from that league
@@ -10,46 +10,33 @@ import { ApolloContext } from '../server.js'
  * @param teamName An optional team name to filter players/coach by
  */
 export const getLeaguePlayers = async (
+  _,
   { leagueCode, teamName },
-  { prisma }: ApolloContext
+  { db }: ApolloContext
 ): Promise<Array<Coach | Player>> => {
   logger.info('Getting league players', { leagueCode, teamName })
   try {
-    const teams = await prisma.team.findMany({
-      include: {
-        players: {
-          include: {
-            team: {
-              include: {
-                leagues: true
-              }
-            }
-          }
-        },
-        coach: {
-          include: {
-            team: {
-              include: {
-                leagues: true
-              }
-            }
-          }
-        }
-      },
-      where: teamName
-        ? { leagues: { every: { code: leagueCode } }, name: teamName }
-        : { leagues: { every: { code: leagueCode } } }
-    })
+    let teams = []
+    if (teamName) {
+      // If we have a teamName arg we get only that team
+      teams = [await db.getRepository(Team).findOne({ where: { name: teamName }, loadRelationIds: true })]
+    } else {
+      // If we dont have a teamName arg we get all the teams from a given league
+      const league = await db.getRepository(League).findOne({ where: { code: leagueCode }, relations: ['teams'] })
+      teams = league.teams
+    }
 
-    // This flattens the results array
-    return teams.reduce((acc, team) => {
-      // If there are players we add them
-      if (team.players.length) return [...acc, ...team.players]
-      // If there are not players but there is a coach we add them
-      if (team.coach != null) return [...acc, team.coach]
-      // If there are neither we dont add anything
-      else return acc
-    }, [])
+    return (
+      await Promise.all(
+        teams.map(team =>
+          team.playersIds.length
+            // If the team has any players we return them
+            ? db.getRepository(Player).find({ where: { id: In(team.playersIds) } })
+            // If it doesnt have players we return its coach
+            : db.getRepository(Coach).find({ where: { teamId: team.id } })
+        )
+      )
+    ).flat(1)
   } catch (e) {
     logger.error('Error trying to import league', { status: e.status, message: e.message, error: e })
     throw new GraphQLError('Error trying to import league', {
@@ -59,48 +46,4 @@ export const getLeaguePlayers = async (
       }
     })
   }
-}
-
-/**
- * It takes an array of teams and save all of it's players/coach ond the db
- * @param teams an array of teams with its players and coach
- * @param leagueCode The code of the teams league
- */
-export const saveAllPlayers = async (teams: TeamWithSquad[], prisma: PrismaClient): Promise<void> => {
-  logger.info('Saving players/coachs on db')
-
-  // Creates an array with all the players
-  const playersToAdd = teams.reduce((acc, team) => {
-    return [...acc, ...team.players]
-  }, [])
-
-  // Creates an array with all the coaches of the teams without players
-  const coachesToAdd = teams.reduce((acc, team) => (team.players.length ? acc : [...acc, team.coach]), [])
-
-  await Promise.all([
-    // We add all the players in the array to the db
-    prisma.player.createMany({
-      skipDuplicates: true,
-      data: playersToAdd.map((player: Player) => ({
-        teamId: player.teamId,
-        id: player.id,
-        dateOfBirth: player.dateOfBirth,
-        name: player.name,
-        nationality: player.nationality,
-        position: player.position
-      }))
-    }),
-    // The same with all the coachs
-    prisma.coach.createMany({
-      skipDuplicates: true,
-      data: coachesToAdd.map((coach: Coach) => ({
-        teamId: coach.teamId,
-        id: coach.id,
-        dateOfBirth: coach.dateOfBirth,
-        name: coach.name,
-        nationality: coach.nationality
-      }))
-    })
-  ])
-  logger.info('Players saved')
 }
