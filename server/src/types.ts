@@ -1,4 +1,3 @@
-import { Team, Player, Coach } from '@prisma/client'
 interface ApiArea {
   id: string
   name: string
@@ -77,12 +76,4 @@ export interface ApiCompetitionTeamsResponse {
   competition: ApiCompetition
   season: ApiSeason
   teams: ApiTeam[]
-}
-
-/**
- * The Team Model with its players and coach added
- */
-export interface TeamWithSquad extends Team {
-  players: Player[]
-  coach: Coach
 }

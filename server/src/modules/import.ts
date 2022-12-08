@@ -1,18 +1,17 @@
 import logger from '../logger.js'
-import got from 'got'
-import { ApiCompetitionResponse } from '../types.js'
-import { League, PrismaClient, Team } from '@prisma/client'
-import { getTeamsFromAPI, saveTeams } from '../modules/teams.js'
-import { saveAllPlayers } from '../modules/squad.js'
+import { League, Player, Team } from '../db/entities.js'
+import { getTeamsFromAPI } from './teams.js'
 import { GraphQLError } from 'graphql'
 import { ApolloContext } from '../server.js'
 import { getTimePassed } from '../utils.js'
+import { ApiCompetitionResponse } from '../types.js'
+import got from 'got'
 
 /**
  * Takes a league code and saves the competition its teams and its players on the db
  * @param leagueCode The code of the required league
  */
-export const importLeague = async (leagueCode: string, { ip, prisma, redis }: ApolloContext) => {
+export const importLeague = async (_, { leagueCode }, { db, redis, ip }: ApolloContext) => {
   logger.info(`Importing league: ${leagueCode}`, { ip })
 
   const lastRead = await redis.get(leagueCode + ip)
@@ -25,10 +24,48 @@ export const importLeague = async (leagueCode: string, { ip, prisma, redis }: Ap
   }
 
   try {
-    const [teams, competition] = await Promise.all([getTeamsFromAPI(leagueCode), getCompetitionFromAPI(leagueCode)])
-    await saveCompetition(competition, teams, prisma)
-    await saveTeams(teams, leagueCode, prisma)
-    await saveAllPlayers(teams, prisma)
+    // Gets data from API
+    const [{ teams, players }, league] = await Promise.all([
+      getTeamsFromAPI(leagueCode),
+      getCompetitionFromAPI(leagueCode)
+    ])
+
+    const teamsEntities = teams.map(team => {
+      const teamEntity = db.getRepository(Team).create({
+        address: team.address,
+        areaName: team.areaName,
+        id: team.id,
+        name: team.name,
+        shortName: team.shortName,
+        tla: team.tla,
+        playersIds: team.playersIds
+      })
+      if (team.coach.id) {
+        teamEntity.coachId = team.coach.id
+      }
+      return teamEntity
+    })
+
+    const playersEntities = players.map((player: Player) => db.getRepository(Player).create(player))
+
+    await Promise.all([
+      db.createQueryBuilder().insert().into(Team).values(teamsEntities).orIgnore().execute(),
+      db.createQueryBuilder().insert().into(Player).values(playersEntities).orIgnore().execute()
+    ])
+
+    const leagueEntity = db.getRepository(League).create(league)
+    const leagueSaved = await db.getRepository(League).findOne({ where: { code: leagueCode } })
+    if (!leagueSaved) {
+      await db.manager.save(leagueEntity)
+      await db
+        .createQueryBuilder()
+        .relation(League, 'teams')
+        .of(leagueEntity)
+        .add(teamsEntities.map(x => x.id))
+    } else {
+      leagueEntity.teams = teamsEntities
+      await db.manager.save(leagueEntity)
+    }
 
     redis.set(leagueCode + ip, new Date().toString())
 
@@ -64,64 +101,4 @@ export const getCompetitionFromAPI = async (leagueCode: string): Promise<League>
     code: league.code,
     name: league.name
   }
-}
-
-/**
- * Takes a league and saves it on the db
- * @param league The competition to save on the db
- * @returns
- */
-export const saveCompetition = async (
-  league: League,
-  teams: Team[],
-  prisma: PrismaClient
-): Promise<number> => {
-  const result = await prisma.league.upsert({
-    create: {
-      ...league
-    },
-    update: {
-      areaName: league.areaName,
-      name: league.name
-    },
-    where: {
-      code: league.code
-    }
-  })
-  return result.id
-}
-
-/**
- * Finds all the leagues on the db and returns them
- */
-export const getAllLeagues = ({ prisma }: ApolloContext) => {
-  return prisma.league.findMany({
-    include: {
-      teams: {
-        include: {
-          players: true,
-          coach: true
-        }
-      }
-    }
-  })
-}
-
-/**
- * Finds a league by name on the db and returns it
- */
-export const getLeagueByName = (name, { prisma }: ApolloContext) => {
-  return prisma.league.findFirst({
-    where: {
-      name
-    },
-    include: {
-      teams: {
-        include: {
-          players: true,
-          coach: true
-        }
-      }
-    }
-  })
 }

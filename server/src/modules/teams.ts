@@ -1,28 +1,29 @@
 import got from 'got'
 import { GraphQLError } from 'graphql'
-import { Coach, Player, PrismaClient, Team } from '@prisma/client'
 
 import { ApiCompetitionTeamsResponse } from '../types.js'
-import { TeamWithSquad } from '../types.js'
 import logger from '../logger.js'
 import { ApolloContext } from '../server.js'
+import { In } from 'typeorm'
+import { Coach, Player, Team } from '../db/entities.js'
 
 /**
- * It takes a league code and returns a list of players/coachs from that league
- * @param leagueCode The code of league to retrieve players/coachs from
- * @param leagueCode An optional team name to filter players/coach by
+ * It takes a team name and returns a team object
+ *
+ * @param name The name of the team that we want
  */
-export const getTeam = async (name: string, { prisma }: ApolloContext): Promise<TeamWithSquad> => {
+export const getTeam = async (_, { name }, { db }: ApolloContext): Promise<Team> => {
   logger.info('Getting team from db', { name })
   try {
-    return await prisma.team.findFirst({
-      include: {
-        players: true,
-        coach: true,
-        leagues: true
+    const result = await db.getRepository(Team).findOne({
+      where: {
+        name
       },
-      where: { name }
+      relations: {
+        leagues: true
+      }
     })
+    return result
   } catch (e) {
     logger.error('Error trying to import league', { status: e.status, message: e.message, error: e })
     throw new GraphQLError('Error trying to import league', {
@@ -39,7 +40,7 @@ export const getTeam = async (name: string, { prisma }: ApolloContext): Promise<
  * @param leagueCode The code of the required league
  * @returns A promise that resolves in an array of teams with it's players and coach
  */
-export const getTeamsFromAPI = async (leagueCode: string): Promise<TeamWithSquad[]> => {
+export const getTeamsFromAPI = async (leagueCode: string): Promise<{ teams: Team[]; players: Player[] }> => {
   logger.info(`Importing teams from API, league: ${leagueCode}`)
   const apiResponse: ApiCompetitionTeamsResponse = await got(
     `http://api.football-data.org/v4/competitions/${leagueCode}/teams`,
@@ -59,16 +60,7 @@ export const getTeamsFromAPI = async (leagueCode: string): Promise<TeamWithSquad
       name: apiTeam.name ?? '',
       shortName: apiTeam.shortName ?? '',
       tla: apiTeam.tla ?? '',
-      players: apiTeam.squad.map(apiPlayer => {
-        return {
-          id: apiPlayer.id ?? undefined,
-          teamId: apiTeam.id,
-          dateOfBirth: apiPlayer.dateOfBirth ?? '',
-          name: apiPlayer.name ?? '',
-          nationality: apiPlayer.nationality ?? '',
-          position: apiPlayer.position ?? ''
-        }
-      }) as Player[],
+      playersIds: apiTeam.squad.map(player => player.id),
       coach: {
         id: apiTeam.coach.id ?? undefined,
         teamId: apiTeam.id,
@@ -79,40 +71,43 @@ export const getTeamsFromAPI = async (leagueCode: string): Promise<TeamWithSquad
     }
   })
 
-  return teams
+  const players: Player[] = apiResponse.teams.reduce(
+    (acc, curr) => [
+      ...acc,
+      ...curr.squad.map(player => ({
+        id: player.id ?? undefined,
+        teamId: player.id,
+        dateOfBirth: player.dateOfBirth ?? '',
+        name: player.name ?? '',
+        nationality: player.nationality ?? '',
+        position: player.position ?? ''
+      }))
+    ],
+    []
+  )
+
+  return { teams, players }
 }
 
 /**
- * Takes an array of teams and saves them on the db
- * @param teams The teams to save on the db
+ * This function returs all the players of a team
  */
-export const saveTeams = async (teams: Team[], leagueCode: string, prisma: PrismaClient): Promise<void> => {
-  logger.info('Saving teams on db')
-  await Promise.all(
-    teams.map(team => {
-      return prisma.team.upsert({
-        where: { id: team.id },
-        create: {
-          id: team.id,
-          address: team.address,
-          areaName: team.areaName,
-          name: team.name,
-          shortName: team.shortName,
-          tla: team.tla,
-          leagues: {
-            connect: {
-              code: leagueCode
-            }
-          }
-        },
-        update: {
-          leagues: {
-            connect: {
-              code: leagueCode
-            }
-          }
+export const getTeamPlayers = (team: Team, _: unknown, { db }: ApolloContext) => {
+  return db.getRepository(Player).find({
+    where: {
+      id: In(team.playersIds)
+    }
+  })
+}
+
+/**
+ * This function returs the coach of a team
+ */
+export const getTeamCoach = (team: Team, _: unknown, { db }: ApolloContext) =>
+  !team.playersIds.length
+    ? db.getRepository(Coach).findOne({
+        where: {
+          id: team.coachId
         }
       })
-    })
-  )
-}
+    : null
